@@ -1,0 +1,46 @@
+server:
+  port: 9090
+spring:
+  application:
+    name: API_GATEWAY
+  config:
+    import:
+      optional: config-server:http://localhost:9296
+  cloud:
+    gateway:
+      routes:
+        - id: ORDER-SERVICE
+          uri: lb://ORDER-SERVICE
+          predicates:
+            - Path=/order/**
+          filters:
+            - name: CircuitBreaker
+              arg:
+                name: ORDER-SERVICE
+                fallbackuri: forward:/orderServiceFallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 1
+                redis-rate-limiter.burstCapacity: 1
+
+        - id: PRODUCT-SERVICE
+          uri: lb://PRODUCT-SERVICE
+          predicates:
+            - Path=/product/**
+          filters:
+            - name: CircuitBreaker
+              arg:
+                name: PRODUCT-SERVICE
+                fallbackuri: forward:/productServiceFallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 1
+                redis-rate-limiter.burstCapacity: 1
+okta:
+  oauth2:
+    issuer: https://dev-48430418.okta.com/oauth2/default
+    audience: api://default
+    client-id: 0oa72gj999zlChePb5d7
+    client-secret: J1X8o2oXOMPwxvwtI1qJckcZjgy_UqWUJBSU9TyZ
+    scopes: openid, profile, email, offline_access
+
